@@ -1,8 +1,8 @@
+import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from functools import partial
 from typing import List, Tuple
-import time
 
 import hivemind
 from flask import Flask, jsonify, render_template, request
@@ -12,7 +12,6 @@ from petals.data_structures import ServerState
 from petals.dht_utils import get_remote_module_infos
 
 from p2p_utils import check_reachability, check_reachability_parallel
-
 
 INITIAL_PEERS = PUBLIC_INITIAL_PEERS
 
@@ -76,7 +75,7 @@ def health():
         if info is None:
             continue
 
-        model_name, block_idx_str = info.uid.split('.')
+        model_name, block_idx_str = info.uid.split(".")
         found = False
         for peer_id, server in info.servers.items():
             servers[peer_id].throughput = server.throughput
@@ -94,7 +93,9 @@ def health():
         model_state = "healthy" if all_blocks_found and all_bootstrap_reachable else "broken"
 
         server_rows = []
-        model_servers = [(peer_id, server_info) for peer_id, server_info in servers.items() if server_info.model == model.name]
+        model_servers = [
+            (peer_id, server_info) for peer_id, server_info in servers.items() if server_info.model == model.name
+        ]
         for peer_id, server_info in sorted(model_servers):
             block_indices = [block_idx for block_idx, state in server_info.blocks if state != ServerState.OFFLINE]
             block_indices = f"{min(block_indices)}:{max(block_indices) + 1}" if block_indices else ""
@@ -119,14 +120,16 @@ def health():
             )
             server_rows.append(row)
 
-        model_reports.append({
-            "name": model.name,
-            "original_name": model.original_name,
-            "n_blocks": model.n_blocks,
-            "production": model.production,
-            "state": model_state,
-            "server_rows": server_rows,
-        })
+        model_reports.append(
+            {
+                "name": model.name,
+                "original_name": model.original_name,
+                "n_blocks": model.n_blocks,
+                "production": model.production,
+                "state": model_state,
+                "server_rows": server_rows,
+            }
+        )
 
     bootstrap_states = "".join(
         get_state_html("online" if rpc_infos[peer_id]["ok"] else "unreachable") for peer_id in bootstrap_peer_ids
